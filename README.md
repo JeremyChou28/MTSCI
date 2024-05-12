@@ -13,3 +13,7 @@ pip install -r requirements.txt
 1. Download the [raw datasets](https://drive.google.com/drive/u/0/home) and push them into the directory `datasets/`
 
 ## How to run
+
+```shell
+bash ./scripts/main.sh
+```
