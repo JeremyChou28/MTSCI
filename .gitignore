@@ -7,6 +7,9 @@ datasets/
 logs/
 CIKM2024/src/archived/
 scripts/wandb/
+scripts/beijing/
+scripts/slurm/
 *.out
 results/
 saved_models/
+visualization/

@@ -179,19 +179,6 @@ def missed_eval_torch(predict, true, mask):
     #     mape_list.append(mape.item())
     return mae, rmse, mape
 
-
-def missed_eval_np(predict, true, mask):
-    predict, true = np.asarray(predict), np.asarray(true)
-    mae = np.sum(np.absolute(predict - true) * (1 - mask)) / (np.sum(1 - mask) + 1e-5)
-    rmse = np.sqrt(
-        np.sum((predict - true) ** 2 * (1 - mask)) / (np.sum(1 - mask) + 1e-5)
-    )
-    mape = np.sum(np.absolute((predict - true) * (1 - mask))) / (
-        np.sum(np.absolute(true * (1 - mask))) + 1e-5
-    )
-    return mae, rmse, mape
-
-
 def missed_eval_np(predict, true, mask):
     """
     predict: [samples, seq_len, feature_dim]
