@@ -1,16 +1,10 @@
 #!/bin/bash
-###
- # @Description: 
- # @Author: Jianping Zhou
- # @Email: jianpingzhou0927@gmail.com
- # @Date: 2023-11-25 20:47:57
-### 
 cd ../src_copy
 
 method='CSDI+con+inter'
 python_script="main.py"
 scratch=True
-cuda='cuda:2'
+cuda='cuda:3'
 
 if [ $scratch = True ]; then
     folder_path="../logs/scratch"
@@ -27,14 +21,14 @@ else
     echo "Folder already exists: $folder_path"
 fi
 
-dataset='Weather'
-feature_num=21
+dataset='METR-LA'
+feature_num=207
 seq_len=24
-missing_pattern='block'
+missing_pattern='point'
 missing_ratio=0.2
 
 # 设置循环次数
-for ((i=4; i<=4; i++))
+for ((i=1; i<=1; i++))
 do
     # 生成随机 seed 参数，可以根据需要修改
     seed=$i

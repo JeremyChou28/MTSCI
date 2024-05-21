@@ -1,13 +1,7 @@
 #!/bin/bash
-###
- # @Description: 
- # @Author: Jianping Zhou
- # @Email: jianpingzhou0927@gmail.com
- # @Date: 2023-11-25 20:47:57
-### 
-cd ../src
+cd ../src_copy
 
-method='CSDI'
+method='test++'
 python_script="main.py"
 scratch=True
 cuda='cuda:2'
@@ -27,10 +21,10 @@ else
     echo "Folder already exists: $folder_path"
 fi
 
-dataset='ETTm1'
-feature_num=7
+dataset='Weather'
+feature_num=21
 seq_len=24
-missing_pattern='block'
+missing_pattern='point'
 missing_ratio=0.2
 
 # 设置循环次数
@@ -49,7 +43,7 @@ do
             --device $cuda \
             --seed $seed \
             --dataset $dataset \
-            --dataset_path ../../../../KDD2024/datasets/$dataset/raw_data \
+            --dataset_path ../../KDD2024/datasets/$dataset/raw_data \
             --seq_len $seq_len \
             --feature $feature_num \
             --missing_pattern $missing_pattern \
@@ -61,7 +55,7 @@ do
             --device $cuda \
             --seed $seed \
             --dataset $dataset \
-            --dataset_path ../../../../KDD2024/datasets/$dataset/raw_data \
+            --dataset_path ../../KDD2024/datasets/$dataset/raw_data \
             --seq_len $seq_len \
             --feature $feature_num \
             --missing_pattern $missing_pattern \

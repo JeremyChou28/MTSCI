@@ -1,16 +1,10 @@
 #!/bin/bash
-###
- # @Description: 
- # @Author: Jianping Zhou
- # @Email: jianpingzhou0927@gmail.com
- # @Date: 2023-11-25 20:47:57
-### 
 cd ../src_copy
 
 method='CSDI+con+inter'
 python_script="main.py"
 scratch=True
-cuda='cuda:3'
+cuda='cuda:2'
 
 if [ $scratch = True ]; then
     folder_path="../logs/scratch"
@@ -30,7 +24,7 @@ fi
 dataset='METR-LA'
 feature_num=207
 seq_len=24
-missing_pattern='point'
+missing_pattern='block'
 missing_ratio=0.2
 
 # 设置循环次数

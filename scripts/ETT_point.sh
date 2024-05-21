@@ -1,16 +1,10 @@
 #!/bin/bash
-###
- # @Description: 
- # @Author: Jianping Zhou
- # @Email: jianpingzhou0927@gmail.com
- # @Date: 2023-11-25 20:47:57
-### 
-cd ../src_copy
+cd ../src
 
-method='test++'
+method='MTSCI'
 python_script="main.py"
 scratch=True
-cuda='cuda:2'
+cuda='cuda:0'
 
 if [ $scratch = True ]; then
     folder_path="../logs/scratch"
@@ -27,8 +21,8 @@ else
     echo "Folder already exists: $folder_path"
 fi
 
-dataset='Weather'
-feature_num=21
+dataset='ETTm1'
+feature_num=7
 seq_len=24
 missing_pattern='point'
 missing_ratio=0.2

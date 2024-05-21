@@ -7,6 +7,7 @@ datasets/
 logs/
 CIKM2024/src/archived/
 scripts/wandb/
+src/archived/
 scripts/beijing/
 scripts/slurm/
 *.out

@@ -1,10 +1,4 @@
 #!/bin/bash
-###
- # @Description: 
- # @Author: Jianping Zhou
- # @Email: jianpingzhou0927@gmail.com
- # @Date: 2023-11-25 20:47:57
-### 
 cd ../src_copy
 
 method='CSDI+con+inter'
@@ -27,14 +21,14 @@ else
     echo "Folder already exists: $folder_path"
 fi
 
-dataset='METR-LA'
-feature_num=207
+dataset='Weather'
+feature_num=21
 seq_len=24
 missing_pattern='block'
 missing_ratio=0.2
 
 # 设置循环次数
-for ((i=1; i<=1; i++))
+for ((i=4; i<=4; i++))
 do
     # 生成随机 seed 参数，可以根据需要修改
     seed=$i
