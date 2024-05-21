@@ -13,3 +13,4 @@ scripts/slurm/
 results/
 saved_models/
 visualization/
+img/
