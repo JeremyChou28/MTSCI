@@ -1,6 +1,6 @@
 train:
   epochs: 300
-  batch_size: 16
+  batch_size: 4
   lr: 1.0e-3
   alpha: 1
   beta: 10

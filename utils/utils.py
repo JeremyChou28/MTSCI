@@ -31,27 +31,6 @@ def seed_torch(seed=0):
     torch.set_default_dtype(torch.float32)
 
 
-"""
-def random_mask(observed_data, mask, p, rng=None):
-    choice = rng.choice
-    masked_data = observed_data.copy()
-    indicating_mask = np.zeros_like(mask)
-    ones_indices = np.argwhere(mask == 1)
-
-    num_ones = len(ones_indices)
-    num_elements_to_replace = int(p * num_ones)
-    replace_indices = choice(len(ones_indices),
-                             size=num_elements_to_replace,
-                             replace=False)
-
-    for index in replace_indices:
-        i, j = ones_indices[index]
-        indicating_mask[i, j] = 1
-        masked_data[i, j] = np.nan
-    return masked_data, indicating_mask
-"""
-
-
 def random_obs_mask(X, M, p):
     X_copy = X.clone()
     I = torch.zeros_like(M)
@@ -68,7 +47,7 @@ def random_obs_mask(X, M, p):
 
 def sample_mask(
     shape, p=0.0015, p_noise=0.05, max_seq=1, min_seq=1, rng=None
-):  # 制造缺失，block missing和point missing
+):  # block missing, point missing
     if rng is None:
         rand = np.random.random
         randint = np.random.randint
@@ -171,13 +150,8 @@ def missed_eval_torch(predict, true, mask):
     mape = torch.sum(torch.absolute((predict - true) * (1 - mask))) / (
         torch.sum(torch.absolute(true * (1 - mask))) + 1e-5
     )
-    # mape_list = []
-    # for i in range(predict.shape[0]):
-    #     mape = torch.sum(torch.absolute(
-    #         (predict[i] - true[i]) * (1 - mask[i]))) / (
-    #             torch.sum(torch.absolute(true[i] * (1 - mask[i]))) + 1e-5)
-    #     mape_list.append(mape.item())
     return mae, rmse, mape
+
 
 def missed_eval_np(predict, true, mask):
     """

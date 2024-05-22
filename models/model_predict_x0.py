@@ -4,11 +4,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from info_nce import InfoNCE, info_nce
+from diff_block import denoising_network
 
-from diff_block import diff_CSDI
 
-
-class CSDI_base(nn.Module):
+class MTSCI_base(nn.Module):
 
     def __init__(self, target_dim, config, device):
         super().__init__()
@@ -17,11 +16,8 @@ class CSDI_base(nn.Module):
 
         self.emb_time_dim = config["model"]["timeemb"]
         self.emb_feature_dim = config["model"]["featureemb"]
-        self.is_unconditional = config["model"]["is_unconditional"]
 
-        self.emb_total_dim = self.emb_time_dim + self.emb_feature_dim
-        if self.is_unconditional == False:
-            self.emb_total_dim += 1  # for conditional mask
+        self.emb_total_dim = self.emb_time_dim + self.emb_feature_dim + 1
         self.embed_layer = nn.Embedding(
             num_embeddings=self.target_dim, embedding_dim=self.emb_feature_dim
         )
@@ -30,7 +26,7 @@ class CSDI_base(nn.Module):
         config_diff["side_dim"] = self.emb_total_dim
 
         input_dim = 1
-        self.diffmodel = diff_CSDI(config_diff, input_dim)
+        self.diffmodel = denoising_network(config_diff, input_dim)
 
         # parameters for diffusion models
         self.num_steps = config_diff["num_steps"]
@@ -171,7 +167,7 @@ class CSDI_base(nn.Module):
 
         # get the output of diffusion model
         (
-            forward_pred_x0,
+            forward_pred_noise,
             forward_hidden,
             reverse_hidden,
             negative_hidden,  # anchor: all observed data, negative_input: all filled with noise
@@ -180,8 +176,6 @@ class CSDI_base(nn.Module):
             side_info,
             reverse_total_input,
             reverse_side_info,
-            all_observed_input,
-            observed_cond_info,
             all_noisy_input,
             noisy_cond_info,
             X_pred,
@@ -190,9 +184,9 @@ class CSDI_base(nn.Module):
 
         # loss of noise
         target_mask = X_Tilde_mask - cond_mask
-        residual = (X_Tilde - forward_pred_x0) * target_mask
+        residual = (noise - forward_pred_noise) * target_mask
         num_eval = target_mask.sum()
-        loss_x0 = (residual**2).sum() / (num_eval if num_eval > 0 else 1)
+        loss_noise = (residual**2).sum() / (num_eval if num_eval > 0 else 1)
 
         # predict_hidden => first_hidden(missing) + reverse_hidden(not missing)
         predict_hidden = forward_hidden.reshape(B, -1, K, L) * (
@@ -205,7 +199,7 @@ class CSDI_base(nn.Module):
 
         torch.cuda.empty_cache()
 
-        return loss_x0, loss_cons
+        return loss_noise, loss_cons
 
     def set_input_to_diffmodel(
         self,
@@ -220,20 +214,16 @@ class CSDI_base(nn.Module):
                 1
             )
 
-        if self.is_unconditional == True:
-            total_input = noisy_data.unsqueeze(1)  # (B,1,K,L)
-            return total_input
-        else:
-            total_input = get_noisy_total_input(X_original, noisy_data, cond_mask)
-            reverse_total_input = get_noisy_total_input(
-                X_original, noisy_data, reverse_cond_mask
-            )
-            return (
-                total_input,
-                reverse_total_input,
-                X_original.unsqueeze(1),
-                noisy_data.unsqueeze(1),
-            )
+        total_input = get_noisy_total_input(X_original, noisy_data, cond_mask)
+        reverse_total_input = get_noisy_total_input(
+            X_original, noisy_data, reverse_cond_mask
+        )
+        return (
+            total_input,
+            reverse_total_input,
+            X_original.unsqueeze(1),
+            noisy_data.unsqueeze(1),
+        )
 
     def impute(self, X_Tilde, cond_mask, side_info, n_samples):
         B, K, L = X_Tilde.shape
@@ -241,37 +231,16 @@ class CSDI_base(nn.Module):
         imputed_samples = torch.zeros(B, n_samples, K, L).to(self.device)
 
         for i in range(n_samples):
-            # generate noisy observation for unconditional model
-            if self.is_unconditional == True:
-                noisy_cond_history = []
-                for t in range(self.num_steps):
-                    noise = torch.randn_like(X_Tilde)
-                    noisy_X_Tilde = (self.alpha_hat[t] ** 0.5) * X_Tilde + self.beta[
-                        t
-                    ] ** 0.5 * noise
-                    noisy_cond_history.append(noisy_X_Tilde * cond_mask)
-
             current_sample = torch.randn_like(X_Tilde)
 
             for t in range(self.num_steps - 1, -1, -1):
-                if self.is_unconditional == True:
-                    diff_input = (
-                        cond_mask * noisy_cond_history[t]
-                        + (1.0 - cond_mask) * current_sample
-                    )
-                    diff_input = diff_input.unsqueeze(1)  # (B,1,K,L)
-                else:
-                    cond_obs = (cond_mask * X_Tilde).unsqueeze(1)
-                    noisy_target = ((1 - cond_mask) * current_sample).unsqueeze(1)
-                    diff_input = cond_obs + noisy_target
+                cond_obs = (cond_mask * X_Tilde).unsqueeze(1)
+                noisy_target = ((1 - cond_mask) * current_sample).unsqueeze(1)
+                diff_input = cond_obs + noisy_target
 
                 predicted = self.diffmodel.impute(
                     diff_input, side_info, torch.tensor([t]).to(self.device)
                 )
-
-                # coeff1 = 1 / self.alpha_hat[t] ** 0.5
-                # coeff2 = (1 - self.alpha_hat[t]) / (1 - self.alpha[t]) ** 0.5
-                # current_sample = coeff1 * (current_sample - coeff2 * predicted)
 
                 temp = self.alpha[t] / self.alpha_hat[t]
                 coeff1 = self.alpha_hat[t] ** 0.5 * (1 - temp) / (1 - self.alpha[t])
@@ -356,10 +325,10 @@ class CSDI_base(nn.Module):
         return samples, X_Tilde, eval_mask, X_Tilde_mask, observed_tp
 
 
-class CSDI_Imp(CSDI_base):
+class MTSCI(MTSCI_base):
 
     def __init__(self, config, device, target_dim=36, seq_len=24):
-        super(CSDI_Imp, self).__init__(target_dim, config, device)
+        super(MTSCI, self).__init__(target_dim, config, device)
         self.seq_len = seq_len
 
     def process_data(self, batch, istrain=1):

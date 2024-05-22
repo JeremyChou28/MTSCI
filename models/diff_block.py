@@ -124,6 +124,21 @@ class Encoder(nn.Module):
         return skip_concat.reshape(B, -1, K * L)
 
 
+class Decoder(nn.Module):
+    def __init__(self, channels):
+        super(Decoder, self).__init__()
+        self.output_projection1 = Conv1d_with_init(channels, channels, 1)
+        self.output_projection2 = Conv1d_with_init(channels, 1, 1)
+        nn.init.zeros_(self.output_projection2.weight)
+
+    def forward(self, x_hidden, B, K, L):  # (B, channel, K*L) => (B, K, L)
+        x = self.output_projection1(x_hidden)  # (B,channel,K*L)
+        x = F.relu(x)
+        x = self.output_projection2(x)  # (B,1,K*L)
+        x = x.reshape(B, K, L)
+        return x
+
+
 class denoising_network(nn.Module):
 
     def __init__(self, config, inputdim=2):
@@ -137,9 +152,6 @@ class denoising_network(nn.Module):
         self.seqlen = config["seqlen"]
 
         self.input_projection = Conv1d_with_init(inputdim, self.channels, 1)
-        self.output_projection1 = Conv1d_with_init(self.channels, self.channels, 1)
-        self.output_projection2 = Conv1d_with_init(self.channels, 1, 1)
-        nn.init.zeros_(self.output_projection2.weight)
 
         self.backward_projection = Conv1d_with_init(self.seqlen, self.seqlen, 1)
         self.cond_projection = Conv1d_with_init(self.channels + 1, self.channels, 1)
@@ -157,6 +169,7 @@ class denoising_network(nn.Module):
                 ]
             )
         )
+        self.decoder = Decoder(self.channels)
 
     def forward(
         self,
@@ -164,8 +177,6 @@ class denoising_network(nn.Module):
         cond_info,
         reverse_x,
         reverse_cond_info,
-        anchor_input,  # anchor没有用？
-        anchor_cond_info,
         negative_input,
         negative_cond_info,
         X_pred,
@@ -205,7 +216,7 @@ class denoising_network(nn.Module):
             forward_noise_hidden = torch.cat([forward_noise_hidden, new_cond], dim=1)
             forward_noise_hidden = self.cond_projection(forward_noise_hidden)
 
-        forward_noise = self.__decoder(forward_noise_hidden, B, K, L)
+        forward_noise = self.decoder(forward_noise_hidden, B, K, L)
 
         return (
             forward_noise,
@@ -227,7 +238,7 @@ class denoising_network(nn.Module):
         x_hidden = torch.cat([x_hidden, new_cond], dim=1)
         x_hidden = self.cond_projection(x_hidden)
 
-        x_noise = self.__decoder(x_hidden, B, K, L)
+        x_noise = self.decoder(x_hidden, B, K, L)
         return x_noise
 
     # Private helper functions
@@ -238,13 +249,4 @@ class denoising_network(nn.Module):
         x = self.input_projection(x)
         x = F.relu(x)
         x = x.reshape(B, self.channels, K, L)
-        return x
-
-    def __decoder(self, x_hidden, B, K, L):  # (B, channel, K*L) => (B, K, L)
-        if x_hidden is None:  # for pred_x in validation phase
-            return None
-        x = self.output_projection1(x_hidden)  # (B,channel,K*L)
-        x = F.relu(x)
-        x = self.output_projection2(x)  # (B,1,K*L)
-        x = x.reshape(B, K, L)
         return x

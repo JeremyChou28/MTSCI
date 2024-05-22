@@ -16,11 +16,8 @@ class MTSCI_base(nn.Module):
 
         self.emb_time_dim = config["model"]["timeemb"]
         self.emb_feature_dim = config["model"]["featureemb"]
-        self.is_unconditional = config["model"]["is_unconditional"]
 
-        self.emb_total_dim = self.emb_time_dim + self.emb_feature_dim
-        if self.is_unconditional == False:
-            self.emb_total_dim += 1  # for conditional mask
+        self.emb_total_dim = self.emb_time_dim + self.emb_feature_dim + 1
         self.embed_layer = nn.Embedding(
             num_embeddings=self.target_dim, embedding_dim=self.emb_feature_dim
         )
@@ -29,7 +26,7 @@ class MTSCI_base(nn.Module):
         config_diff["side_dim"] = self.emb_total_dim
 
         input_dim = 1
-        self.diffmodel = diff_CSDI(config_diff, input_dim)
+        self.diffmodel = denoising_network(config_diff, input_dim)
 
         # parameters for diffusion models
         self.num_steps = config_diff["num_steps"]
@@ -179,8 +176,6 @@ class MTSCI_base(nn.Module):
             side_info,
             reverse_total_input,
             reverse_side_info,
-            all_observed_input,
-            observed_cond_info,
             all_noisy_input,
             noisy_cond_info,
             X_pred,
@@ -219,20 +214,16 @@ class MTSCI_base(nn.Module):
                 1
             )
 
-        if self.is_unconditional == True:
-            total_input = noisy_data.unsqueeze(1)  # (B,1,K,L)
-            return total_input
-        else:
-            total_input = get_noisy_total_input(X_original, noisy_data, cond_mask)
-            reverse_total_input = get_noisy_total_input(
-                X_original, noisy_data, reverse_cond_mask
-            )
-            return (
-                total_input,
-                reverse_total_input,
-                X_original.unsqueeze(1),
-                noisy_data.unsqueeze(1),
-            )
+        total_input = get_noisy_total_input(X_original, noisy_data, cond_mask)
+        reverse_total_input = get_noisy_total_input(
+            X_original, noisy_data, reverse_cond_mask
+        )
+        return (
+            total_input,
+            reverse_total_input,
+            X_original.unsqueeze(1),
+            noisy_data.unsqueeze(1),
+        )
 
     def impute(self, X_Tilde, cond_mask, side_info, n_samples):
         B, K, L = X_Tilde.shape
@@ -241,28 +232,12 @@ class MTSCI_base(nn.Module):
 
         for i in range(n_samples):
             # generate noisy observation for unconditional model
-            if self.is_unconditional == True:
-                noisy_cond_history = []
-                for t in range(self.num_steps):
-                    noise = torch.randn_like(X_Tilde)
-                    noisy_X_Tilde = (self.alpha_hat[t] ** 0.5) * X_Tilde + self.beta[
-                        t
-                    ] ** 0.5 * noise
-                    noisy_cond_history.append(noisy_X_Tilde * cond_mask)
-
             current_sample = torch.randn_like(X_Tilde)
 
             for t in range(self.num_steps - 1, -1, -1):
-                if self.is_unconditional == True:
-                    diff_input = (
-                        cond_mask * noisy_cond_history[t]
-                        + (1.0 - cond_mask) * current_sample
-                    )
-                    diff_input = diff_input.unsqueeze(1)  # (B,1,K,L)
-                else:
-                    cond_obs = (cond_mask * X_Tilde).unsqueeze(1)
-                    noisy_target = ((1 - cond_mask) * current_sample).unsqueeze(1)
-                    diff_input = cond_obs + noisy_target
+                cond_obs = (cond_mask * X_Tilde).unsqueeze(1)
+                noisy_target = ((1 - cond_mask) * current_sample).unsqueeze(1)
+                diff_input = cond_obs + noisy_target
 
                 predicted = self.diffmodel.impute(
                     diff_input, side_info, torch.tensor([t]).to(self.device)

@@ -12,12 +12,13 @@ from torch.optim import Adam
 from tqdm import tqdm
 import wandb
 
-from utils import *
 
 sys.path.append("../dataloader")
 sys.path.append("../models")
+sys.path.append("../utils")
 from dataloader import *
 from model import MTSCI
+from utils import *
 
 
 def train(
@@ -30,11 +31,11 @@ def train(
     foldername="",
     current_time=None,
 ):
-    wandb.init(
-        project="CIKM2024",
-        name="test_{}_{}".format(args.dataset, current_time),
-        config=args,
-    )
+    # wandb.init(
+    #     project="CIKM2024",
+    #     name="{}_{}".format(args.dataset, current_time),
+    #     config=args,
+    # )
 
     optimizer = Adam(model.parameters(), lr=config["lr"], weight_decay=1e-6)
     if foldername != "":
@@ -66,7 +67,7 @@ def train(
         lr_scheduler.step()
         train_loss = avg_loss / batch_no
         train_loss_noise = avg_loss_noise / batch_no
-        train_loss_cons = avg_loss_cons / batch_no
+        loss_cl = avg_loss_cons / batch_no
 
         if valid_loader is not None and (epoch_no + 1) % valid_epoch_interval == 0:
             model.eval()
@@ -77,11 +78,11 @@ def train(
                     avg_loss_valid += loss.item()
                 valid_loss = avg_loss_valid / batch_no
                 print(
-                    "Epoch {}: train loss = {} train_loss_noise = {} train_loss_cons = {} valid loss = {}".format(
+                    "Epoch {}: train loss = {} train_loss_noise = {} loss_cl = {} valid loss = {}".format(
                         epoch_no + 1,
                         train_loss,
                         train_loss_noise,
-                        train_loss_cons,
+                        loss_cl,
                         valid_loss,
                     )
                 )
@@ -94,25 +95,25 @@ def train(
                     epoch_no,
                 )
                 torch.save(model.state_dict(), output_path)
-            wandb.log(
-                {
-                    "train_loss": train_loss,
-                    "train_loss_noise": train_loss_noise,
-                    "train_loss_cons": train_loss_cons,
-                    "valid_loss": valid_loss,
-                }
-            )
+            # wandb.log(
+            #     {
+            #         "train_loss": train_loss,
+            #         "train_loss_noise": train_loss_noise,
+            #         "loss_cl": loss_cl,
+            #         "valid_loss": valid_loss,
+            #     }
+            # )
         else:
-            wandb.log(
-                {
-                    "train_loss": train_loss,
-                    "train_loss_noise": train_loss_noise,
-                    "train_loss_cons": train_loss_cons,
-                }
-            )
+            # wandb.log(
+            #     {
+            #         "train_loss": train_loss,
+            #         "train_loss_noise": train_loss_noise,
+            #         "loss_cl": loss_cl,
+            #     }
+            # )
             print(
-                "Epoch {}: train loss = {} train_loss_noise = {} train_loss_cons = {}".format(
-                    epoch_no + 1, train_loss, train_loss_noise, train_loss_cons
+                "Epoch {}: train loss = {} train_loss_noise = {} loss_cl = {}".format(
+                    epoch_no + 1, train_loss, train_loss_noise, loss_cl
                 )
             )
 
