@@ -4,11 +4,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from info_nce import InfoNCE, info_nce
+from diff_block import denoising_network
 
-from diff_block import diff_CSDI
 
-
-class CSDI_base(nn.Module):
+class MTSCI_base(nn.Module):
 
     def __init__(self, target_dim, config, device):
         super().__init__()
@@ -351,10 +350,10 @@ class CSDI_base(nn.Module):
         return samples, X_Tilde, eval_mask, X_Tilde_mask, observed_tp
 
 
-class CSDI_Imp(CSDI_base):
+class MTSCI(MTSCI_base):
 
     def __init__(self, config, device, target_dim=36, seq_len=24):
-        super(CSDI_Imp, self).__init__(target_dim, config, device)
+        super(MTSCI, self).__init__(target_dim, config, device)
         self.seq_len = seq_len
 
     def process_data(self, batch, istrain=1):

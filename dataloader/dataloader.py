@@ -3,7 +3,7 @@ import pickle as pk
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from utils import sample_mask, get_block_mask, get_randmask
+from utils import sample_mask
 
 
 def generate_val_test_dataloader(
@@ -94,15 +94,9 @@ def generate_val_test_dataloader(
 def generate_train_dataloader(
     dataset_path, seq_len, missing_ratio, missing_pattern, batch_size=4, mode="train"
 ):
-    if mode == "train":
-        with open(dataset_path + "/train_set.pkl", "rb") as fb:
-            train_data = pk.load(fb)
-    else:
-        with open(dataset_path + "/val_set.pkl", "rb") as fb:
-            train_data = pk.load(fb)
+    with open(dataset_path + "/train_set.pkl", "rb") as fb:
+        train_data = pk.load(fb)
     print("train data shape: ", train_data.shape)
-    # with open(dataset_path + '/scaler.pkl', 'rb') as fb:
-    #     mean, std = pk.load(fb)
 
     train_SEED = 9101112
     train_rng = np.random.default_rng(train_SEED)
@@ -184,7 +178,7 @@ def generate_train_dataloader(
 
 
 if __name__ == "__main__":
-    dataset_path = "../datasets/ETTm1/raw_data/"
+    dataset_path = "../datasets/ETT/raw_data/"
     seq_len = 24
     miss_rate = 0.2
     batch_size = 32

@@ -124,7 +124,7 @@ class Encoder(nn.Module):
         return skip_concat.reshape(B, -1, K * L)
 
 
-class diff_CSDI(nn.Module):
+class denoising_network(nn.Module):
 
     def __init__(self, config, inputdim=2):
         super().__init__()

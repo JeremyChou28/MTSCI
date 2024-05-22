@@ -17,7 +17,7 @@ from utils import *
 sys.path.append("../dataloader")
 sys.path.append("../models")
 from dataloader import *
-from model import CSDI_Imp
+from model import MTSCI
 
 
 def train(
@@ -117,10 +117,16 @@ def train(
             )
 
 
-def evaluate(model, test_loader, nsample=100, scaler=1, mean_scaler=0, foldername=""):
+def evaluate(model, test_loader, nsample, scaler, mean_scaler, save_result_path):
 
     with torch.no_grad():
         model.eval()
+
+        all_target = []
+        all_observed_point = []
+        all_observed_time = []
+        all_evalpoint = []
+        all_generated_samples = []
 
         imputed_data = []
         groundtruth = []
@@ -142,6 +148,12 @@ def evaluate(model, test_loader, nsample=100, scaler=1, mean_scaler=0, foldernam
                     dim=1
                 )  # use median as prediction to calculate the RMSE and MAE, include the median values and the indices
 
+                all_target.append(c_target)
+                all_evalpoint.append(eval_points)
+                all_observed_point.append(observed_points)
+                all_observed_time.append(observed_time)
+                all_generated_samples.append(samples)
+
                 output = samples_median.values * scaler + mean_scaler
                 X_Tilde = c_target * scaler + mean_scaler
                 eval_M = eval_points
@@ -160,11 +172,40 @@ def evaluate(model, test_loader, nsample=100, scaler=1, mean_scaler=0, foldernam
             )
 
             print(
-                "mae = {:.3f}, rmse = {:.3f}, mape = {:.3f}%".format(
-                    mae, rmse, mape * 100
+                "mae = {:.3f}, rmse = {:.3f}, mape = {:.3f}%, mse = {:.3f}, r2 = {:.3f}".format(
+                    mae, rmse, mape * 100, mse, r2
                 )
             )
-            return results
+            np.save(save_result_path + "/result_{}.npy".format(current_time), results)
+
+            with open(
+                save_result_path + "/generated_outputs_nsample" + str(nsample) + ".pk",
+                "wb",
+            ) as f:
+                all_target = torch.cat(all_target, dim=0)  # (B,L,K)
+                all_evalpoint = torch.cat(all_evalpoint, dim=0)  # (B,L,K)
+                all_observed_point = torch.cat(all_observed_point, dim=0)  # (B,L,K)
+                all_observed_time = torch.cat(all_observed_time, dim=0)  # (B,L)
+                all_generated_samples = torch.cat(
+                    all_generated_samples, dim=0
+                )  # (B,nsample,L,K)
+
+                pickle.dump(
+                    [
+                        all_generated_samples,
+                        all_target,
+                        all_evalpoint,
+                        all_observed_point,
+                        all_observed_time,
+                        scaler,
+                        mean_scaler,
+                    ],
+                    f,
+                )
+            CRPS = calc_quantile_CRPS(
+                all_target, all_generated_samples, all_evalpoint, mean_scaler, scaler
+            )
+            print("CRPS:", CRPS)
 
 
 def main(args):
@@ -175,8 +216,6 @@ def main(args):
     path = "../config/{}_{}.yaml".format(args.dataset, args.missing_pattern)
     with open(path, "r") as f:
         config = yaml.safe_load(f)
-
-    config["model"]["is_unconditional"] = args.unconditional
 
     print(json.dumps(config, indent=4))
 
@@ -189,20 +228,17 @@ def main(args):
     missing_pattern = args.missing_pattern
     batch_size = config["train"]["batch_size"]
 
-    saving_path = args.saving_path + "/test/{}/{}/{}".format(
+    saving_path = args.saving_path + "/{}/{}/{}".format(
         dataset, missing_pattern, miss_rate
     )
     if not os.path.exists(saving_path):
         os.makedirs(saving_path)
 
-    print("model folder:", saving_path)
-
-    save_result_path = args.save_result_path + "test/{}/{}/{}".format(
+    save_result_path = args.save_result_path + "/{}/{}/{}".format(
         dataset, missing_pattern, miss_rate
     )
     if not os.path.exists(save_result_path):
         os.makedirs(save_result_path)
-    print("save result path: ", save_result_path)
 
     # load data
     train_loader = generate_train_dataloader(
@@ -236,7 +272,7 @@ def main(args):
     mean = torch.from_numpy(mean).to(args.device)
     std = torch.from_numpy(std).to(args.device)
 
-    model = CSDI_Imp(
+    model = MTSCI(
         config, args.device, target_dim=args.feature, seq_len=args.seq_len
     ).to(args.device)
 
@@ -256,68 +292,67 @@ def main(args):
         )
     else:
         print("load model from", args.checkpoint_path)
-
         model.load_state_dict(torch.load(args.checkpoint_path))
 
-    results = evaluate(
+    evaluate(
         model,
         test_loader,
         nsample=args.nsample,
         scaler=std,
         mean_scaler=mean,
-        foldername=saving_path,
+        foldername=save_result_path,
     )
-    if args.ood:
-        np.save(save_result_path + "/result_ood_{}.npy".format(test_miss_rate), results)
-    else:
-        np.save(save_result_path + "/result_{}.npy".format(current_time), results)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CSDI")
-    parser.add_argument("--device", default="cuda:0", help="Device for Attack")
-    parser.add_argument("--dataset", default="ETTm1", type=str, help="dataset name")
+    parser = argparse.ArgumentParser(description="MTSCI")
+    parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--dataset", default="ETT", type=str, help="dataset name")
     parser.add_argument(
         "--dataset_path",
         type=str,
-        help="parent dir of generated dataset",
-        default="../../../../KDD2024/datasets/ETTm1/raw_data/",
+        default="../datasets/ETT/raw_data/",
     )
     parser.add_argument(
         "--save_result_path",
-        help="the save path of imputed data",
         type=str,
         default="../results/",
+        help="the save path of imputed data",
     )
     parser.add_argument(
-        "--saving_path", type=str, help="saving model pth", default="../saved_models"
+        "--saving_path", type=str, default="../saved_models", help="saving model pth"
     )
-    parser.add_argument("--seq_len", help="sequence length", type=int, default=24)
-    parser.add_argument(
-        "--missing_pattern", help="missing pattern", type=str, default="point"
-    )
-    parser.add_argument(
-        "--missing_ratio", help="missing ratio", type=float, default=0.2
-    )
-    parser.add_argument(
-        "--val_missing_ratio", help="missing ratio in valid", type=float, default=0.2
-    )
-    parser.add_argument(
-        "--test_missing_ratio", help="missing ratio in test", type=float, default=0.2
-    )
-    parser.add_argument("--feature", help="feature nums", type=int, default=7)
     parser.add_argument(
         "--checkpoint_path",
         type=str,
         default="../saved_models/test/ETTm1/block/0.2/model_2024-04-27-15-58-21.pth",
     )
-    parser.add_argument("--num_workers", type=int, default=0, help="Device for Attack")
+    parser.add_argument("--seq_len", type=int, default=24, help="sequence length")
+    parser.add_argument("--feature", help="feature nums", type=int, default=7)
+    parser.add_argument(
+        "--missing_pattern",
+        type=str,
+        default="point",
+        help="missing pattern on training set",
+    )
+    parser.add_argument(
+        "--missing_ratio", type=float, default=0.2, help="missing ratio on training set"
+    )
+    parser.add_argument(
+        "--val_missing_ratio",
+        type=float,
+        default=0.2,
+        help="missing ratio on validation set",
+    )
+    parser.add_argument(
+        "--test_missing_ratio",
+        type=float,
+        default=0.2,
+        help="missing ratio on testing set",
+    )
     parser.add_argument("--scratch", action="store_true", help="test or scratch")
     parser.add_argument("--nsample", type=int, default=100)
-    parser.add_argument("--unconditional", action="store_true")
-    parser.add_argument("--ood", action="store_true", help="i.i.d or OoD")
     parser.add_argument("--seed", type=int, default=1)
-
     args = parser.parse_args()
     print(args)
 
