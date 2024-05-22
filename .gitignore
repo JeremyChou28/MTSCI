@@ -31,3 +31,4 @@ src/main_aqi36.py
 src/main_hyperparamter.py
 src/main_iid.py
 src/main_predict_x0.py
+src/main_ood.py
