@@ -15,12 +15,13 @@ It's a pytorch implementation of paper "MTSCI: A Conditional Diffusion Model for
 pip install -r requirements.txt
 ```
 
-## Datasets
-
-1. Download the [raw datasets](https://drive.google.com/drive/u/0/home) and push them into the directory `datasets/`
-
 ## How to run
 
 ```shell
-bash ./scripts/main.sh
+bash ./scripts/ETT_point.sh
+bash ./scripts/ETT_block.sh
+bash ./scripts/Weather_point.sh
+bash ./scripts/Weather_block.sh
+bash ./scripts/METRLA_point.sh
+bash ./scripts/METRLA_block.sh
 ```
