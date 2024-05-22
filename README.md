@@ -15,6 +15,12 @@ It's a pytorch implementation of paper "MTSCI: A Conditional Diffusion Model for
 pip install -r requirements.txt
 ```
 
+## Datasets
+
+- ETT
+- Weather
+- METR-LA (you should unzip the METRLA.tar.gz `tar -zxvf METRLA.tar.gz`)
+
 ## How to run
 
 ```shell
