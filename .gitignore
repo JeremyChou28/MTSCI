@@ -14,7 +14,7 @@ src/archived/
 scripts/beijing/
 scripts/slurm/
 *.out
-datasets/
+datasets/METR-LA
 visualization/
 img/
 
