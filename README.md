@@ -1,10 +1,3 @@
-<!--
- * @Description:
- * @Author: Jianping Zhou
- * @Email: jianpingzhou0927@gmail.com
- * @Date: 2024-05-22 14:53:04
--->
-
 # MTSCI: Multivariate Time Series Consistent Imputation
 
 It's a pytorch implementation of paper "MTSCI: A Conditional Diffusion Model for Consistent Imputation in Incomplete Time Series" under review in CIKM2024.
