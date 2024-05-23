@@ -5,7 +5,6 @@ utils/__pycache__/
 
 logs/
 results/
-saved_models/
 
 src/archived/
 src/wandb/

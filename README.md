@@ -16,6 +16,22 @@ pip install -r requirements.txt
 
 ## How to run
 
+### Train MTSCI from scratch
+
+```shell
+bash ./scripts/ETT_point.sh
+bash ./scripts/ETT_block.sh
+bash ./scripts/Weather_point.sh
+bash ./scripts/Weather_block.sh
+bash ./scripts/METRLA_point.sh
+bash ./scripts/METRLA_block.sh
+```
+
+### Test MTSCI from trained model
+
+First, set the scratch is `False` in scripts.
+Then, run these scripts.
+
 ```shell
 bash ./scripts/ETT_point.sh
 bash ./scripts/ETT_block.sh
