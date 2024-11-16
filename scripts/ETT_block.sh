@@ -3,7 +3,7 @@ cd ../src
 
 python_script="main.py"
 
-scratch=False
+scratch=True
 cuda='cuda:7'
 dataset='ETT'
 feature_num=7

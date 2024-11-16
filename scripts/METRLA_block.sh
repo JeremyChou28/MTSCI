@@ -1,16 +1,10 @@
 #!/bin/bash
-###
- # @Description: 
- # @Author: Jianping Zhou
- # @Email: jianpingzhou0927@gmail.com
- # @Date: 2024-11-16 18:31:07
-### 
 cd ../src
 
 python_script="main.py"
 
-scratch=False
-cuda='cuda:4'
+scratch=True
+cuda='cuda:2'
 dataset='METR-LA'
 feature_num=207
 seq_len=24
