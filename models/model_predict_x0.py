@@ -344,14 +344,16 @@ class MTSCI(MTSCI_base):
         else:
             X_tensor, mask_tensor, X_Tilde_tensor, indicating_mask_tensor = batch
 
-        X_Tilde = X_Tilde_tensor.to(self.device).float()  # B,L,F，带天然缺失的数据
+        X_Tilde = X_Tilde_tensor.to(
+            self.device
+        ).float()  # B,L,F, with original missing values
         X_mask = mask_tensor.to(
             self.device
-        ).float()  # 天然缺失+人为缺失后的mask，缺失为0，不缺失为1
+        ).float()  # original missing + artifically missing (0: missing, 1: observed)
         indicating_mask = indicating_mask_tensor.to(
             self.device
         ).float()  # indicating mask
-        X_Tilde_mask = X_mask + indicating_mask  # 天然缺失的mask，缺失为0，不缺失为1
+        X_Tilde_mask = X_mask + indicating_mask
 
         batch_size = X_Tilde.shape[0]
         observed_tp = (

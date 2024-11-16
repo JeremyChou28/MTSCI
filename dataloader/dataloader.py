@@ -178,11 +178,11 @@ def generate_train_dataloader(
 
 
 if __name__ == "__main__":
-    dataset_path = "../datasets/ETT/raw_data/"
+    dataset_path = "../datasets/ETT/"
     seq_len = 24
     miss_rate = 0.2
     batch_size = 32
-    missing_pattern = "block"
+    missing_pattern = "point"
     train_loader = generate_train_dataloader(
         dataset_path,
         seq_len,

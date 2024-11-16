@@ -1,3 +1,4 @@
+# METR-LA Point
 train:
   epochs: 300
   batch_size: 4
