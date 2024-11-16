@@ -32,7 +32,7 @@ def train(
     current_time=None,
 ):
     # wandb.init(
-    #     project="CIKM2024",
+    #     project="MTSCI",
     #     name="{}_{}".format(args.dataset, current_time),
     #     config=args,
     # )
@@ -53,7 +53,6 @@ def train(
     for epoch_no in range(config["epochs"]):
         avg_loss, avg_loss_noise, avg_loss_cons = 0.0, 0.0, 0.0
         model.train()
-        # with tqdm(train_loader, mininterval=5.0, maxinterval=50.0) as it:
         for batch_no, train_batch in enumerate(train_loader):
             optimizer.zero_grad()
 
@@ -180,10 +179,6 @@ def evaluate(
                 1 - results["eval_mask"],
             )
 
-            # with open(
-            #     save_result_path + "/generated_outputs_nsample" + str(nsample) + ".pk",
-            #     "wb",
-            # ) as f:
             all_target = torch.cat(all_target, dim=0)  # (B,L,K)
             all_evalpoint = torch.cat(all_evalpoint, dim=0)  # (B,L,K)
             all_observed_point = torch.cat(all_observed_point, dim=0)  # (B,L,K)
@@ -192,18 +187,6 @@ def evaluate(
                 all_generated_samples, dim=0
             )  # (B,nsample,L,K)
 
-            # pickle.dump(
-            #     [
-            #         all_generated_samples,
-            #         all_target,
-            #         all_evalpoint,
-            #         all_observed_point,
-            #         all_observed_time,
-            #         scaler,
-            #         mean_scaler,
-            #     ],
-            #     f,
-            # )
             CRPS = calc_quantile_CRPS(
                 all_target, all_generated_samples, all_evalpoint, mean_scaler, scaler
             )
@@ -332,7 +315,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checkpoint_path",
         type=str,
-        default="../saved_models/test/ETTm1/block/0.2/model_2024-04-27-15-58-21.pth",
+        default="../saved_models/test/ETTm1/point/0.2/model.pth",
     )
     parser.add_argument("--seq_len", type=int, default=24, help="sequence length")
     parser.add_argument("--feature", help="feature nums", type=int, default=7)

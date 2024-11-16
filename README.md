@@ -7,7 +7,7 @@
 
 # MTSCI: Multivariate Time Series Consistent Imputation
 
-It's a pytorch implementation of paper "MTSCI: A Conditional Diffusion Model for Consistent Imputation in Incomplete Time Series" accepted in CIKM2024.
+It's a pytorch implementation of paper "[MTSCI: A Conditional Diffusion Model for Consistent Imputation in Incomplete Time Series](https://dl.acm.org/doi/10.1145/3627673.3679532)" accepted in CIKM2024.
 
 ## Requirements
 
@@ -26,12 +26,13 @@ pip install -r requirements.txt
 ### Train MTSCI from scratch
 
 ```shell
-bash ./scripts/ETT_point.sh
-bash ./scripts/ETT_block.sh
-bash ./scripts/Weather_point.sh
-bash ./scripts/Weather_block.sh
-bash ./scripts/METRLA_point.sh
-bash ./scripts/METRLA_block.sh
+cd scripts/
+bash ETT_point.sh
+bash ETT_block.sh
+bash Weather_point.sh
+bash Weather_block.sh
+bash METRLA_point.sh
+bash METRLA_block.sh
 ```
 
 ### Test MTSCI from trained model
@@ -40,10 +41,24 @@ First, set the scratch is `False` in scripts.
 Then, run these scripts.
 
 ```shell
-bash ./scripts/ETT_point.sh
-bash ./scripts/ETT_block.sh
-bash ./scripts/Weather_point.sh
-bash ./scripts/Weather_block.sh
-bash ./scripts/METRLA_point.sh
-bash ./scripts/METRLA_block.sh
+bash ETT_point.sh
+bash ETT_block.sh
+bash Weather_point.sh
+bash Weather_block.sh
+bash METRLA_point.sh
+bash METRLA_block.sh
+```
+
+## Citation
+
+If you find this repo useful, please cite our paper. Thanks for your attention.
+
+```
+@inproceedings{zhou2024mtsci,
+  title={MTSCI: A Conditional Diffusion Model for Multivariate Time Series Consistent Imputation},
+  author={Zhou, Jianping and Li, Junhao and Zheng, Guanjie and Wang, Xinbing and Zhou, Chenghu},
+  booktitle={Proceedings of the 33rd ACM International Conference on Information and Knowledge Management},
+  pages={3474--3483},
+  year={2024}
+}
 ```

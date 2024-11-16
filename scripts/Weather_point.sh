@@ -1,4 +1,10 @@
 #!/bin/bash
+###
+ # @Description: 
+ # @Author: Jianping Zhou
+ # @Email: jianpingzhou0927@gmail.com
+ # @Date: 2024-11-16 18:44:59
+### 
 cd ../src
 
 python_script="main.py"

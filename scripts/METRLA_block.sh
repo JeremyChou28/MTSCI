@@ -1,17 +1,23 @@
 #!/bin/bash
+###
+ # @Description: 
+ # @Author: Jianping Zhou
+ # @Email: jianpingzhou0927@gmail.com
+ # @Date: 2024-11-16 18:31:07
+### 
 cd ../src
 
 python_script="main.py"
 
-scratch=True
-cuda='cuda:7'
+scratch=False
+cuda='cuda:4'
 dataset='METR-LA'
 feature_num=207
 seq_len=24
 missing_pattern='block'
-missing_ratio=0.2
-val_missing_ratio=0.2
-test_missing_ratio=0.2
+missing_ratio=0.05
+val_missing_ratio=0.05
+test_missing_ratio=0.05
 dataset_path="../datasets/$dataset/"
 checkpoint_path="../saved_models/METR-LA/block/0.2/model.pth"
 
@@ -45,6 +51,8 @@ do
             --feature $feature_num \
             --missing_pattern $missing_pattern \
             --missing_ratio $missing_ratio \
+            --val_missing_ratio $val_missing_ratio \
+            --test_missing_ratio $test_missing_ratio \
             > $log_path/${dataset}_${missing_pattern}_ms${missing_ratio}_seed${seed}.log 2>&1 &
     else
         nohup python -u $python_script \
