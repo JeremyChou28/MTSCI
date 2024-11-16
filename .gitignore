@@ -34,5 +34,5 @@ src/main_iid.py
 src/main_predict_x0.py
 src/main_ood.py
 
-./saved_models/ETT/block/0.05/
-./saved_models/Weather/block/0.05/
+saved_models/ETT/block/0.05/
+saved_models/Weather/block/0.05/
