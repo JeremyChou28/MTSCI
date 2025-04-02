@@ -4,7 +4,7 @@ cd ../src
 python_script="main.py"
 
 scratch=True
-cuda='cuda:1'
+cuda='cuda:3'
 dataset='ETT'
 feature_num=7
 seq_len=24

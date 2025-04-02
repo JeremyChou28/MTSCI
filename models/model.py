@@ -275,9 +275,7 @@ class MTSCI_base(nn.Module):
             X_pred, X_pred_mask = None, None
 
         cond_mask = X_mask
-        reverse_cond_mask = X_Tilde_mask - (
-            1 - indicating_mask
-        )  # X_Tilde_mask == 1 and indicating_mask == 0
+        reverse_cond_mask = X_Tilde_mask * indicating_mask  
         negative_mask = torch.zeros_like(X_Tilde_mask)
 
         # all values are: natural missing + natural oberved (artificially masked + conditional info)

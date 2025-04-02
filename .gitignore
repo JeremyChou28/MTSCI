@@ -13,6 +13,7 @@ src/archived/
 scripts/beijing/
 scripts/slurm/
 *.out
+*.ipynb
 datasets/METR-LA
 visualization/
 img/
