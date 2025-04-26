@@ -4,7 +4,7 @@ cd ../src
 python_script="main.py"
 
 scratch=True
-cuda='cuda:6'
+cuda='cuda:0'
 dataset='Weather'
 feature_num=21
 seq_len=24

@@ -13,7 +13,7 @@ missing_ratio=0.05
 val_missing_ratio=0.05
 test_missing_ratio=0.05
 dataset_path="../datasets/$dataset/"
-checkpoint_path="../saved_models/METR-LA/block/0.2/model.pth"
+checkpoint_path="../saved_models/METR-LA/block/0.05/model.pth"
 
 if [ $scratch = True ]; then
     log_path="../logs/scratch"

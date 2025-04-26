@@ -4,7 +4,7 @@ cd ../src
 python_script="main.py"
 
 scratch=True
-cuda='cuda:7'
+cuda='cuda:0'
 dataset='ETT'
 feature_num=7
 seq_len=24
@@ -13,7 +13,7 @@ missing_ratio=0.05
 val_missing_ratio=0.05
 test_missing_ratio=0.05
 dataset_path="../datasets/$dataset/"
-checkpoint_path="../saved_models/ETT/block/0.2/model.pth"
+checkpoint_path="../saved_models/ETT/block/0.05/model.pth"
 
 if [ $scratch = True ]; then
     log_path="../logs/scratch"
@@ -28,7 +28,7 @@ else
     echo "Folder already exists: $log_path"
 fi
 
-for ((i=1; i<=5; i++))
+for ((i=1; i<=1; i++))
 do
     seed=$i
 

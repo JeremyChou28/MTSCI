@@ -336,11 +336,12 @@ class MTSCI(MTSCI_base):
                 mask_tensor,
                 indicating_mask_tensor,
                 X_Tilde_tensor,
+                X_Tilde_mask_tensor,
                 pred_tensor,
                 pred_mask_tensor,
             ) = batch
         else:
-            X_tensor, mask_tensor, X_Tilde_tensor, indicating_mask_tensor = batch
+            X_tensor, mask_tensor, X_Tilde_tensor, X_Tilde_mask_tensor,indicating_mask_tensor = batch
 
         X_Tilde = X_Tilde_tensor.to(
             self.device
@@ -351,7 +352,9 @@ class MTSCI(MTSCI_base):
         indicating_mask = indicating_mask_tensor.to(
             self.device
         ).float()  # indicating mask
-        X_Tilde_mask = X_mask + indicating_mask
+        X_Tilde_mask = X_Tilde_mask_tensor.to(
+            self.device
+        ).float()
 
         batch_size = X_Tilde.shape[0]
         observed_tp = (

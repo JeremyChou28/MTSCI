@@ -37,9 +37,9 @@ def generate_val_test_dataloader(
         indicating_mask = sample_mask(
             shape=data.shape,
             p=0.0015,
-            p_noise=missing_ratio,
-            max_seq=12,
-            min_seq=12 * 4,
+            p_noise=0.05,
+            min_seq=12,
+            max_seq=12 * 4,
             rng=rng,
         )
     else:
@@ -48,8 +48,8 @@ def generate_val_test_dataloader(
             shape=data.shape,
             p=0.0,
             p_noise=missing_ratio,
-            max_seq=12,
-            min_seq=12 * 4,
+            min_seq=12,
+            max_seq=12 * 4,
             rng=rng,
         )
     X = X_Tilde * (1 - indicating_mask)
@@ -70,20 +70,22 @@ def generate_val_test_dataloader(
 
     sample_nums = data.shape[0] // seq_len
     print(mode + " samples: {}".format(sample_nums))
-    input_X_list, input_mask_list, eval_mask, output_gt_list = [], [], [], []
+    input_X_list, input_mask_list, eval_mask, output_gt_list,output_gt_mask = [], [], [], [],[]
     for i in range(sample_nums):
         input_X_list.append(X[i * seq_len : (i + 1) * seq_len])
         input_mask_list.append(mask[i * seq_len : (i + 1) * seq_len])
         eval_mask.append(indicating_mask[i * seq_len : (i + 1) * seq_len])
         output_gt_list.append(X_Tilde[i * seq_len : (i + 1) * seq_len])
+        output_gt_mask.append(gt_mask[i * seq_len : (i + 1) * seq_len])
 
     X_tensor = torch.from_numpy(np.array(input_X_list)).float()
     mask_tensor = torch.from_numpy(np.array(input_mask_list)).float()
     eval_mask_tensor = torch.from_numpy(np.array(eval_mask)).float()
     X_Tilde_tensor = torch.from_numpy(np.array(output_gt_list)).float()
+    output_gt_mask_tensor = torch.from_numpy(np.array(output_gt_mask)).float()
 
     tensor_dataset = TensorDataset(
-        X_tensor, mask_tensor, X_Tilde_tensor, eval_mask_tensor
+        X_tensor, mask_tensor, X_Tilde_tensor, output_gt_mask_tensor, eval_mask_tensor
     )
     dataloader = DataLoader(
         tensor_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
@@ -110,8 +112,8 @@ def generate_train_dataloader(
             shape=train_data.shape,
             p=0.0015,
             p_noise=missing_ratio,
-            max_seq=12,
-            min_seq=12 * 4,
+            min_seq=12,
+            max_seq=12 * 4,
             rng=train_rng,
         )
     else:
@@ -120,8 +122,8 @@ def generate_train_dataloader(
             shape=train_data.shape,
             p=0.0,
             p_noise=missing_ratio,
-            max_seq=12,
-            min_seq=12 * 4,
+            min_seq=12,
+            max_seq=12 * 4,
             rng=train_rng,
         )
 
@@ -147,14 +149,16 @@ def generate_train_dataloader(
         input_mask_list,
         eval_mask,
         output_gt_list,
+        output_gt_mask,
         pred_gt_list,
         pred_gt_mask,
-    ) = ([], [], [], [], [], [])
+    ) = ([], [], [], [], [], [],[])
     for i in range(train_nums):
         input_X_list.append(X[i * seq_len : (i + 1) * seq_len])
         input_mask_list.append(mask[i * seq_len : (i + 1) * seq_len])
         eval_mask.append(indicating_mask[i * seq_len : (i + 1) * seq_len])
         output_gt_list.append(X_Tilde[i * seq_len : (i + 1) * seq_len])
+        output_gt_mask.append(gt_mask[i * seq_len : (i + 1) * seq_len])
         pred_gt_list.append(X_Tilde[(i + 1) * seq_len : (i + 2) * seq_len])
         pred_gt_mask.append(gt_mask[(i + 1) * seq_len : (i + 2) * seq_len])
 
@@ -162,6 +166,7 @@ def generate_train_dataloader(
     mask_tensor = torch.from_numpy(np.array(input_mask_list)).float()
     eval_mask_tensor = torch.from_numpy(np.array(eval_mask)).float()
     X_Tilde_tensor = torch.from_numpy(np.array(output_gt_list)).float()
+    output_gt_mask_tensor = torch.from_numpy(np.array(output_gt_mask)).float()
     pred_gt_tensor = torch.from_numpy(np.array(pred_gt_list)).float()
     pred_gt_mask_tensor = torch.from_numpy(np.array(pred_gt_mask)).float()
 
@@ -170,6 +175,7 @@ def generate_train_dataloader(
         mask_tensor,
         eval_mask_tensor,
         X_Tilde_tensor,
+        output_gt_mask_tensor,
         pred_gt_tensor,
         pred_gt_mask_tensor,
     )
